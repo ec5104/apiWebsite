@@ -1,0 +1,26 @@
+html, body {
+    color:black;
+    
+  }
+  
+  details {
+    cursor: crosshair;
+  }
+  
+  p {
+    cursor: crosshair;
+  }
+  
+  #info {
+    font-size:14px;
+    z-index:1;
+  }
+  
+  button {
+    border-radius:15px;
+    background-color:transparent;
+    border-width:1px;
+  
+  }
+  
+  
