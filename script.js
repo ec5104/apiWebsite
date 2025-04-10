@@ -1,69 +1,80 @@
-//old context stuff nothing new here
 let context;
 let button;
 let playing = false;
 let soundy;
 let infoField;
+let toggleBtn;
+
+// Location tracking
+let lastLat = null;
+let lastLong = null;
+let lastTime = null;
 
 window.onload = (event) => {
   soundy = document.querySelector("#soundy");
-  console.log(soundy);
   infoField = document.querySelector("#info");
+  toggleBtn = document.querySelector("#toggleSound");
+
+  const output = document.getElementById("output");
+  console.log("Output element:", output); // debug
+
+  toggleBtn.addEventListener("click", () => {
+    if (soundy.paused) {
+      soundy.play();
+      toggleBtn.innerHTML = "⏸ Pause";
+    } else {
+      soundy.pause();
+      toggleBtn.innerHTML = "▶️ Play";
+    }
+  });
 };
 
-
-//set this to your desired address
-let tommyLat = 40.693368073976764;
-let tommyLong =-73.98795830821966;
-
-//eltons
-let eltonsLat = 40.69272122881661;
-let eltonsLong = -73.98702333530535;
-
-
-function checkLocation () {
-  if ( 'geolocation' in navigator) {
-  console.log(navigator);
-  console.log ( 'geolocation available');
-  console.log(navigator.geolocation.getCurrentPosition);
-    
-    //navigator geolocation getcurrentposition takes a callback function as an argument (provides coords when they are available )
-  navigator.geolocation.getCurrentPosition(function(e) {
-    console.log(e);
-    renderLoc(e.coords.latitude, e.coords.longitude);
-  }
-                                          
-  );
-
+function checkLocation() {
+  if ('geolocation' in navigator) {
+    navigator.geolocation.getCurrentPosition(function(e) {
+      renderLoc(e.coords.latitude, e.coords.longitude);
+    });
   } else {
-  console.log ('geolocation not available');
+    console.log('geolocation not available');
   }
-
-  function renderLoc (lat, lon) {
-    if (Math.abs(lat - tommyLat) < .001 && Math.abs(lon - tommyLong) < .001 ) {
-      console.log('youre there');
-      infoField.innerHTML = "you're there 🌎"
-      soundy.play();
-    }
-    else {
-      console.log('nope not there');
-      infoField.innerHTML = "nope not there 👎🏼"
-    }
-    
-    //second site
-    
-    if (Math.abs(lat - eltonsLat) < .001 && Math.abs(lon - eltonsLong) < .001 ) {
-      console.log('youre there');
-      infoField.innerHTML = "you're there 🌎"
-      soundy.play();
-    }
-    else if (Math.abs(lat - eltonsLat) < .001 && Math.abs(lon - tommyLong)) {
-             
-             
-      console.log('nope not there');
-      infoField.innerHTML = "nope not there 👎🏼"
-    }
-  }
-
 }
 
+function renderLoc(lat, lon) {
+  let currentTime = Date.now();
+
+  if (lastLat !== null && lastLong !== null && lastTime !== null) {
+    let timeDiff = (currentTime - lastTime) / 1000;
+    let distance = getDistanceFromLatLonInKm(lastLat, lastLong, lat, lon);
+    let pace = distance / (timeDiff / 3600);
+  
+    console.log(`Pace: ${pace.toFixed(2)} km/h`);
+    document.getElementById("output").innerHTML = `${pace.toFixed(2)} km/h`;
+  
+    let rate = Math.min(Math.max(pace / 5, 0.5), 2);
+    soundy.playbackRate = rate;
+  } else {
+    document.getElementById("output").innerHTML = `0 km/h`;
+  }
+
+  lastLat = lat;
+  lastLong = lon;
+  lastTime = currentTime;
+}
+
+function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1); 
+  const a = 
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.sin(dLon / 2) * Math.sin(dLon / 2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+  return R * c;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+setInterval(checkLocation, 5000); 
